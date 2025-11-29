@@ -1,0 +1,61 @@
+name: Build macOS .app (py2app)
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+
+jobs:
+  build-mac-app:
+    name: Build macOS .app (py2app)
+    runs-on: macos-12
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install py2app
+
+      - name: Prepare .env (copy example if missing)
+        run: |
+          if [ ! -f .env ] && [ -f .env.example ]; then cp .env.example .env; fi
+
+      - name: Collect static
+        run: |
+          python manage.py collectstatic --noinput
+
+      - name: Run py2app build (full)
+        run: |
+          python3 setup.py py2app
+
+      - name: Package dist artifact
+        run: |
+          mkdir -p artifact
+          if [ -d dist/PharmaGestion.app ]; then
+            cd dist
+            /usr/bin/zip -r ../artifact/PharmaGestion.app.zip PharmaGestion.app
+            cd ..
+          else
+            echo "dist/PharmaGestion.app not found" >&2
+            exit 1
+          fi
+
+      - name: Upload built .app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PharmaGestion-macos-app
+          path: artifact/PharmaGestion.app.zip
+
+      - name: "Optional notarization placeholder"
+        if: false
+        run: |
+          echo "Configure codesign and notarization steps here using secrets (not enabled by default)."

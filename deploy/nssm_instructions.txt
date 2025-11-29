@@ -1,0 +1,41 @@
+NSSM instructions for running Gunicorn on Windows
+
+1. Install NSSM (https://nssm.cc/download) and extract.
+2. Open an elevated command prompt and run `nssm install Pharmagestion`.
+3. In the NSSM GUI:
+   - Path: C:\path\to\venv\Scripts\gunicorn.exe (or use `python -m gunicorn` via the Python executable)
+   - Startup directory: C:\path\to\project
+   - Arguments: pharmagestion.wsgi:application --bind 0.0.0.0:8000 --workers 3
+4. Under the "Environment" tab, add required env vars like `DJANGO_SETTINGS_MODULE`, `SECRET_KEY`, `DEBUG`, and any DB settings.
+5. Click Install service, then `nssm start Pharmagestion` to start the service.
+
+Notes:
+- On Windows, prefer using Waitress instead of Gunicorn; Gunicorn is not officially supported on Windows.
+- If you use Waitress, change Path to C:\path\to\venv\Scripts\python.exe and Arguments to -m waitress --port=8000 pharmagestion.wsgi:application
+NSSM (Windows) instructions to run Gunicorn in a Windows service wrapper.
+
+Notes:
+- NSSM (the Non-Sucking Service Manager) can wrap a program as a Windows service.
+- On Windows, you typically run Gunicorn via WSL or use a native WSGI server for Windows. If you run inside WSL, use the Linux instructions.
+
+If you still want to use NSSM to run the project using a Python installation (native Windows Python):
+
+1. Install Python and create a virtualenv for the project. Activate it and install requirements.
+2. Install NSSM from https://nssm.cc/ and copy `nssm.exe` to a directory in PATH or run it directly.
+3. From an elevated cmd.exe, install a new service:
+
+   nssm install Pharmagestion
+
+   In the NSSM GUI or command line, set:
+   - Path: C:\\path\\to\\venv\\Scripts\\python.exe
+   - Startup directory: C:\\path\\to\\project
+   - Arguments: -m gunicorn pharmagestion.wsgi:application --bind 0.0.0.0:8000 --workers 3
+
+4. Under Environment, add any environment variables like DJANGO_SETTINGS_MODULE, DJANGO_SECRET_KEY, and ALLOWED_HOSTS.
+5. Start the service:
+
+   nssm start Pharmagestion
+
+Notes and recommended alternate approach:
+- Running Django in production on Windows is not recommended; prefer Linux/macOS or WSL for production workloads.
+- If using WSL, treat the app as a Linux app (use the `gunicorn_start.sh` script and systemd/launchers inside WSL), and expose ports appropriately.

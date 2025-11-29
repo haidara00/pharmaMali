@@ -1,0 +1,7 @@
+# Minimal production requirements for deployment
+Django==5.0.2
+gunicorn
+whitenoise
+python-dotenv
+psycopg2-binary
+waitress

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.example.pharmagestion</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/path/to/venv/bin/gunicorn</string>
+    <string>pharmagestion.wsgi:application</string>
+    <string>--bind</string>
+    <string>0.0.0.0:8000</string>
+    <string>--workers</string>
+    <string>3</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>DJANGO_SETTINGS_MODULE</key>
+    <string>pharmagestion.settings</string>
+    <key>SECRET_KEY</key>
+    <string>REPLACE_ME</string>
+    <key>DEBUG</key>
+    <string>False</string>
+  </dict>
+  <key>WorkingDirectory</key>
+  <string>/path/to/project</string>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/var/log/pharmagestion.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>/var/log/pharmagestion.stderr.log</string>
+</dict>
+</plist>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fournisseurs (supprimés)</title>
+    {% load static %}
+</head>
+<body>
+    <div style="padding:2rem; text-align:center;">
+        <h3>Cette page a été supprimée.</h3>
+        <p>La fonctionnalité Fournisseurs n'est plus disponible.</p>
+    </div>
+</body>
+</html>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer
+        style="margin-top: var(--spacing-2xl); padding: var(--spacing-lg); text-align: center; border-top: 1px solid var(--glass-border);">
+        <small style="color: var(--text-secondary);">
+            Un produit <strong style="color: var(--color-primary);">HydaraSoft</strong> |
+            Développé par <strong>Ismail HAIDARA</strong> |
+            📞 <a href="tel:+22391550337">00223 91550337</a> |
+            📧 <a href="mailto:ihaidara852@gmail.com">ihaidara852@gmail.com</a>
+        </small>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/animations.js' %}"></script>
+    <script src="/static/js/offline-sales.js"></script>
+    <script src="/static/js/offline-data-loader.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/js/service-worker.js');
+        }
+
+        if (navigator.onLine && window.offlineDataLoader) {
+            window.offlineDataLoader.loadAllData();
+        }
+    </script>
+</body>
+
+</html>

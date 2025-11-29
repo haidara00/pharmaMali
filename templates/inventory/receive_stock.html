@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réceptionner Stock - PharmaGestion</title>
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom Design System -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+    <div style="max-width: 900px; margin: 0 auto; padding: var(--spacing-lg);">
+        <!-- Header -->
+        <div
+            style="background: linear-gradient(135deg, var(--color-success), var(--color-primary)); padding: var(--spacing-xl); border-radius: var(--radius-xl); margin-bottom: var(--spacing-xl); box-shadow: var(--shadow-xl);">
+            <h1
+                style="margin: 0; color: white; font-size: var(--text-3xl); display: flex; align-items: center; gap: var(--spacing-md);">
+                <i class="bi bi-truck"></i>
+                Réceptionner Stock
+            </h1>
+            <div style="margin-top: var(--spacing-md);">
+                <a href="/inventory/products/"
+                    style="color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <i class="bi bi-arrow-left"></i> Retour aux Produits
+                </a>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="glass-card glass-card-lg">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                <div
+                    style="background: var(--color-danger-light); border-left: 4px solid var(--color-danger); padding: var(--spacing-md); margin-bottom: var(--spacing-lg); border-radius: var(--radius-md);">
+                    <h3 style="margin: 0 0 var(--spacing-sm) 0; color: var(--color-danger); font-size: var(--text-lg);">
+                        <i class="bi bi-exclamation-triangle"></i> Erreurs de validation
+                    </h3>
+                    <ul style="margin: 0; padding-left: var(--spacing-lg); color: var(--text-primary);">
+                        {% for field in form %}
+                        {% for error in field.errors %}
+                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                        {% endfor %}
+                        {% endfor %}
+                        {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div style="margin-bottom: var(--spacing-lg);">
+                    <label
+                        style="display: block; margin-bottom: var(--spacing-sm); color: var(--text-primary); font-weight: 500;">
+                        Produit <span style="color: var(--color-danger);">*</span>
+                    </label>
+                    {{ form.product }}
+                </div>
+
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); margin-bottom: var(--spacing-lg);">
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: var(--spacing-sm); color: var(--text-primary); font-weight: 500;">
+                            Numéro de Lot <span style="color: var(--color-danger);">*</span>
+                        </label>
+                        {{ form.batch_number }}
+                    </div>
+
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: var(--spacing-sm); color: var(--text-primary); font-weight: 500;">
+                            Date d'Expiration <span style="color: var(--color-danger);">*</span>
+                        </label>
+                        {{ form.expiry_date }}
+                    </div>
+                </div>
+
+                <div
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacing-lg); margin-bottom: var(--spacing-lg);">
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: var(--spacing-sm); color: var(--text-primary); font-weight: 500;">
+                            Quantité Reçue <span style="color: var(--color-danger);">*</span>
+                        </label>
+                        {{ form.quantity }}
+                    </div>
+
+                    <div>
+                        <label
+                            style="display: block; margin-bottom: var(--spacing-sm); color: var(--text-primary); font-weight: 500;">
+                            Prix d'Achat Unitaire (FCFA) <span style="color: var(--color-danger);">*</span>
+                        </label>
+                        {{ form.purchase_price }}
+                    </div>
+                </div>
+
+                <div style="margin-bottom: var(--spacing-lg);">
+                    <label
+                        style="display: block; margin-bottom: var(--spacing-sm); color: var(--text-primary); font-weight: 500;">
+                        Fournisseur <span style="color: var(--color-danger);">*</span>
+                    </label>
+                    {{ form.supplier }}
+                </div>
+
+                <div
+                    style="display: flex; gap: var(--spacing-md); justify-content: flex-end; margin-top: var(--spacing-2xl);">
+                    <a href="/inventory/products/" class="btn-gradient btn-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn-gradient btn-success">
+                        <i class="bi bi-check-circle"></i> Réceptionner
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer
+        style="margin-top: var(--spacing-2xl); padding: var(--spacing-lg); text-align: center; border-top: 1px solid var(--glass-border);">
+        <small style="color: var(--text-secondary);">
+            Un produit <strong style="color: var(--color-primary);">HydaraSoft</strong> |
+            Développé par <strong>Ismail HAIDARA</strong>
+        </small>
+    </footer>
+
+    <script src="{% static 'js/animations.js' %}"></script>
+</body>
+
+</html>

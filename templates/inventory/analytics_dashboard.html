@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Avancées - PharmaGestion</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Chart.js for beautiful charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+</head>
+<body class="bg-dark text-light">
+    <nav class="navbar navbar-dark" style="background-color: #2b2b3a;">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">
+                <i class="bi bi-graph-up"></i> Analytics Avancées
+            </span>
+            <div class="navbar-nav flex-row align-items-center">
+                <a href="/inventory/dashboard/" class="nav-link text-light me-3">
+                    <i class="bi bi-clipboard-data"></i> Tableau de Bord
+                </a>
+                <a href="/" class="nav-link text-light me-3">
+                    <i class="bi bi-cash-coin"></i> Caisse
+                </a>
+                <!-- Export PDF button -->
+               <!-- <a href="{% url 'analytics_inventory_pdf' %}" target="_blank" class="btn btn-outline-light btn-sm" title="Exporter la page en PDF">
+                    <i class="bi bi-file-earmark-pdf"></i> Exporter PDF
+                </a>
+                -->
+                <span class="ms-2" style="font-size:0.9rem; color: rgba(255,255,255,0.75);">Astuce: Appuyez sur <kbd style="background:rgba(255,255,255,0.06); border-radius:4px; padding:2px 6px;">⌘ P</kbd> / <kbd style="background:rgba(255,255,255,0.06); border-radius:4px; padding:2px 6px;">Ctrl P</kbd></span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4" x-data="analyticsDashboard()">
+        <!-- Period Selector -->
+        <div class="row mb-4">
+            <div class="col">
+                <div class="card bg-dark border-secondary text-light">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h5 class="card-title mb-0">
+                                    <i class="bi bi-calendar-range"></i> Période d'Analyse
+                                </h5>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="btn-group w-100">
+                                    <template x-for="period in periods" :key="period.days">
+                                        <button
+                                            class="btn"
+                                            :class="activePeriod === period.days ? 'btn-primary' : 'btn-outline-primary'"
+                                            @click="loadData(period.days)"
+                                            x-text="period.label"
+                                        ></button>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sales Overview Cards -->
+        <div class="row mb-4">
+            <div class="col-xl-2 col-md-4 mb-3">
+                <div class="card bg-dark border-primary text-light">
+                    <div class="card-body text-center">
+                        <i class="bi bi-receipt display-6 text-primary"></i>
+                        <h3 class="card-title mt-2" x-text="salesMetrics.total_sales || '0'"></h3>
+                        <p class="card-text text-muted">Ventes Total</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-2 col-md-4 mb-3">
+                <div class="card bg-dark border-success text-light">
+                    <div class="card-body text-center">
+                        <i class="bi bi-currency-exchange display-6 text-success"></i>
+                        <h3 class="card-title mt-2" x-text="formatPrice(salesMetrics.total_revenue)"></h3>
+                        <p class="card-text text-muted">Chiffre d'Affaires</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-2 col-md-4 mb-3">
+                <div class="card bg-dark border-info text-light">
+                    <div class="card-body text-center">
+                        <i class="bi bi-graph-up display-6 text-info"></i>
+                        <h3 class="card-title mt-2" x-text="formatPrice(salesMetrics.average_sale)"></h3>
+                        <p class="card-text text-muted">Panier Moyen</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-2 col-md-4 mb-3">
+                <div class="card bg-dark border-warning text-light">
+                    <div class="card-body text-center">
+                        <i class="bi bi-speedometer display-6 text-warning"></i>
+                        <h3 class="card-title mt-2" x-text="salesMetrics.sales_per_day || '0'"></h3>
+                        <p class="card-text text-muted">Ventes/Jour</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-2 col-md-4 mb-3">
+                <div class="card bg-dark border-danger text-light">
+                    <div class="card-body text-center">
+                        <i class="bi bi-cash-stack display-6 text-danger"></i>
+                        <h3 class="card-title mt-2" x-text="formatPrice(salesMetrics.revenue_per_day)"></h3>
+                        <p class="card-text text-muted">CA/Jour</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-2 col-md-4 mb-3">
+                <div class="card border-secondary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-calendar display-6 text-secondary"></i>
+                        <h3 class="card-title mt-2" x-text="periodLabel"></h3>
+                        <p class="card-text text-muted">Période</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="row mb-4">
+            <!-- Sales Trend Chart -->
+            <div class="col-lg-8 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-graph-up-arrow"></i> Tendances des Ventes
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="salesTrendChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Distribution -->
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-pie-chart"></i> Répartition des Paiements
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="paymentChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="row mb-4">
+            <!-- Top Products -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-trophy"></i> Top 10 Produits Vendus
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="topProductsChart" width="400" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profitability -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-currency-dollar"></i> Produits les Plus Rentables
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive" style="max-height: 300px;">
+                            <table class="table table-sm table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Produit</th>
+                                        <th>Marge</th>
+                                        <th>Prix Vente</th>
+                                        <th>Profit Stock</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="product in profitableProducts" :key="product.name">
+                                        <tr>
+                                            <td>
+                                                <small x-text="product.name"></small>
+                                            </td>
+                                            <td>
+                                                <span class="badge"
+                                                      :class="getMarginBadgeClass(product.profit_margin)"
+                                                      x-text="product.profit_margin.toFixed(1) + '%'">
+                                                </span>
+                                            </td>
+                                            <td x-text="formatPrice(product.selling_price)"></td>
+                                            <td x-text="formatPrice(product.total_profit)"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Analytics -->
+        <div class="row mb-4 text-secondary">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="bi bi-box-seam"></i> Analytics Inventaire
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Stock Status -->
+                            <div class="col-md-4 mb-3">
+                                <h6>Statut du Stock</h6>
+                                <canvas id="stockStatusChart" width="200" height="200"></canvas>
+                            </div>
+
+                            <!-- Inventory Metrics -->
+                            <div class="col-md-4 mb-3 text-light">
+                                <h6>Métriques Clés</h6>
+                                <div class="list-group">
+                                    <div class="list-group-item d-flex justify-content-between">
+                                        <span>Valeur Inventaire:</span>
+                                        <strong x-text="formatPrice(inventoryMetrics.inventory_value)"></strong>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between text-light">
+                                        <span>Produits Total:</span>
+                                        <strong x-text="inventoryMetrics.total_products"></strong>
+                                    </div>
+                                    <div class="list-group-item d-flex justify-content-between text-light">
+                                        <span>Stock Moyen:</span>
+                                        <strong x-text="inventoryMetrics.average_stock_level.toFixed(1)"></strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Expiry Alerts -->
+                            <div class="col-md-4 mb-3 text-light">
+                                <h6>Alertes Expiration</h6>
+                                <div class="list-group text-light" style="max-height: 200px; overflow-y: auto;">
+                                    <template x-for="alert in inventoryMetrics.expiry_alerts" :key="alert.product__name">
+                                        <div class="list-group-item text-light">
+                                            <div class="d-flex w-100 justify-content-between">
+                                                <small x-text="alert.product__name"></small>
+                                                <small class="text-muted" x-text="alert.days_until_expiry + 'j'"></small>
+                                            </div>
+                                            <small class="text-muted" x-text="'Exp: ' + formatDate(alert.expiry_date)"></small>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ======= HYDARASOFT FOOTER ======= -->
+<footer class="mt-4 py-2 border-top">
+    <div class="container text-center">
+        <small class="text-muted">
+            Un produit <strong class="text-primary">HydaraSoft</strong> | 
+            Développé par <strong>Ismail HAIDARA</strong> | 
+            📞 <a href="tel:+22391550337" class="text-decoration-none">00223 91550337</a> | 
+            📧 <a href="mailto:ihaidara852@gmail.com" class="text-decoration-none">ihaidara852@gmail.com</a>
+        </small>
+    </div>
+</footer>
+<!-- ======= END FOOTER ======= -->
+        <script>
+          function analyticsDashboard() {
+              return {
+                  activePeriod: 30,
+                  periodLabel: '30 jours',
+                  periods: [
+                      { days: 7, label: '7 jours' },
+                      { days: 30, label: '30 jours' },
+                      { days: 90, label: '3 mois' },
+                      { days: 365, label: '1 an' }
+                  ],
+                  salesMetrics: {},
+                  salesCharts: {},
+                  profitableProducts: [],
+                  inventoryMetrics: {},
+
+                  async init() {
+                      await this.loadData(30);
+                  },
+
+                  async loadData(days) {
+                      this.activePeriod = days;
+                      this.periodLabel = this.periods.find(p => p.days === days).label;
+
+                      try {
+                          const [salesResponse, profitabilityResponse, inventoryResponse] = await Promise.all([
+                              fetch(`/inventory/api/analytics/sales/?days=${days}`),
+                              fetch('/inventory/api/analytics/profitability/'),
+                              fetch('/inventory/api/analytics/inventory/')
+                          ]);
+
+                          const salesData = await salesResponse.json();
+                          const profitabilityData = await profitabilityResponse.json();
+                          const inventoryData = await inventoryResponse.json();
+
+                          this.salesMetrics = salesData.metrics || {};
+                          this.salesCharts = salesData.charts || {};
+                          this.profitableProducts = profitabilityData.most_profitable_products || [];
+                          this.inventoryMetrics = inventoryData || {};
+
+                          this.renderCharts();
+
+                      } catch (error) {
+                          console.error('Error:', error);
+                      }
+                  },
+
+                  renderCharts() {
+                      this.renderSalesTrendChart();
+                      this.renderPaymentChart();
+                      this.renderTopProductsChart();
+                      this.renderStockStatusChart();
+                  },
+
+                  renderSalesTrendChart() {
+                      const ctx = document.getElementById('salesTrendChart');
+                      if (!ctx) return;
+
+                      const salesData = this.salesCharts.sales_by_day || [];
+                      const dates = salesData.map(item => item.sale_day) || [];
+                      const revenues = salesData.map(item => item.daily_revenue) || [];
+
+                      new Chart(ctx, {
+                          type: 'line',
+                          data: {
+                              labels: dates,
+                              datasets: [{
+                                  label: 'Chiffre d\'Affaires (FCFA)',
+                                  data: revenues,
+                                  borderColor: '#0d6efd',
+                                  backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                                  tension: 0.4,
+                                  fill: true
+                              }]
+                          },
+                          options: {
+                              responsive: true,
+                              plugins: {
+                                  title: {
+                                      display: true,
+                                      text: 'Évolution du Chiffre d\'Affaires'
+                                  }
+                              }
+                          }
+                      });
+                  },
+
+                  renderPaymentChart() {
+                      const ctx = document.getElementById('paymentChart');
+                      if (!ctx) return;
+
+                      const paymentData = this.salesCharts.payment_distribution || [];
+                      const labels = paymentData.map(item => item.sale_type === 'paid' ? 'Comptant' : 'Crédit');
+                      const data = paymentData.map(item => item.count);
+
+                      new Chart(ctx, {
+                          type: 'doughnut',
+                          data: {
+                              labels: labels.length ? labels : ['No Data'],
+                              datasets: [{
+                                  data: data.length ? data : [1],
+                                  backgroundColor: ['#198754', '#ffc107'],
+                                  borderWidth: 2
+                              }]
+                          },
+                          options: {
+                              responsive: true,
+                              plugins: {
+                                  legend: {
+                                      position: 'bottom'
+                                  }
+                              }
+                          }
+                      });
+                  },
+
+                  renderTopProductsChart() {
+                      const ctx = document.getElementById('topProductsChart');
+                      if (!ctx) return;
+
+                      const topProducts = (this.salesCharts.top_products || []).slice(0, 10);
+                      const labels = topProducts.map(item => item.product__name);
+                      const data = topProducts.map(item => item.quantity_sold);
+
+                      new Chart(ctx, {
+                          type: 'bar',
+                          data: {
+                              labels: labels.length ? labels : ['No Data'],
+                              datasets: [{
+                                  label: 'Quantité Vendue',
+                                  data: data.length ? data : [0],
+                                  backgroundColor: '#6f42c1'
+                              }]
+                          },
+                          options: {
+                              indexAxis: 'y',
+                              responsive: true,
+                              plugins: {
+                                  legend: {
+                                      display: false
+                                  }
+                              }
+                          }
+                      });
+                  },
+
+                  renderStockStatusChart() {
+                      const ctx = document.getElementById('stockStatusChart');
+                      if (!ctx) return;
+
+                      const stockData = this.inventoryMetrics.stock_status || { out_of_stock: 0, low_stock: 0, in_stock: 0 };
+                      const labels = ['Rupture', 'Stock Faible', 'En Stock'];
+                      const data = [stockData.out_of_stock || 0, stockData.low_stock || 0, stockData.in_stock || 0];
+
+                      new Chart(ctx, {
+                          type: 'pie',
+                          data: {
+                              labels: labels,
+                              datasets: [{
+                                  data: data,
+                                  backgroundColor: ['#dc3545', '#ffc107', '#198754']
+                              }]
+                          },
+                          options: {
+                              responsive: true,
+                              plugins: {
+                                  legend: {
+                                      position: 'bottom'
+                                  }
+                              }
+                          }
+                      });
+                  },
+
+                  formatPrice(price) {
+                      if (!price) return '0 FCFA';
+                      return new Intl.NumberFormat('fr-FR', {
+                          style: 'currency',
+                          currency: 'XOF'
+                      }).format(price);
+                  }
+              }
+          }
+      </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <style>
+        body.bg-dark { background-color: #121217; color: #e6e6e9; }
+        .card { box-shadow: 0 6px 18px rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.04); background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.25)); }
+        .card .card-header { background: transparent; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .navbar-brand { font-weight: 600; color: #fff; }
+        .btn-outline-light { border-color: rgba(255,255,255,0.12); }
+        .list-group-item { background: transparent; border: 1px solid rgba(255,255,255,0.03); }
+        .table { color: #e6e6e9; }
+    </style>
+    <!-- ======= OFFLINE SUPPORT SCRIPTS ======= -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<script src="/static/js/offline-sales.js"></script>
+<script src="/static/js/offline-data-loader.js"></script>
+
+<script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/js/service-worker.js');
+    }
+    
+    // Offline data for analytics
+    if (navigator.onLine && window.offlineDataLoader) {
+        window.offlineDataLoader.loadAllData();
+    }
+</script>
+</body>
+</html>

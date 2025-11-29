@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PharmaGestion - Registre des Crédits</title>
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom Design System -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <!-- Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <style>
+        .credit-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-lg);
+        }
+
+        .credit-header {
+            background: linear-gradient(135deg, var(--color-warning), var(--color-danger));
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-xl);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: var(--shadow-xl), var(--shadow-glow-warning);
+        }
+
+        .customer-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-left: 4px solid var(--color-warning);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            transition: all var(--transition-base);
+        }
+
+        .customer-card:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .customer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-md);
+            padding-bottom: var(--spacing-sm);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .sale-item {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="credit-container" x-data="creditLedgerApp()">
+        <!-- Header -->
+        <div class="credit-header">
+            <h1
+                style="margin: 0; color: white; font-size: var(--text-3xl); display: flex; align-items: center; gap: var(--spacing-md);">
+                <i class="bi bi-credit-card"></i>
+                Registre des Crédits
+            </h1>
+            <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-md); flex-wrap: wrap;">
+                <a href="/" class="btn-gradient btn-success">
+                    <i class="bi bi-cash-coin"></i> Retour à la Caisse
+                </a>
+                <a href="/sales-history/" class="btn-gradient btn-primary">
+                    <i class="bi bi-clock-history"></i> Historique des Ventes
+                </a>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div x-show="summary.total_customers > 0" class="summary-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-xl);">
+            <div class="metric-card metric-card-warning">
+                <div class="icon"><i class="bi bi-people"></i></div>
+                <div class="value" x-text="summary.total_customers">0</div>
+                <div class="label">Clients avec Crédit</div>
+            </div>
+
+            <div class="metric-card metric-card-danger metric-card-pulse">
+                <div class="icon"><i class="bi bi-exclamation-triangle"></i></div>
+                <div class="value" x-text="formatPrice(summary.total_outstanding)">0 FCFA</div>
+                <div class="label">Total des Crédits</div>
+            </div>
+
+            <div class="metric-card metric-card-primary">
+                <div class="icon"><i class="bi bi-calendar-check"></i></div>
+                <div class="value" style="font-size: var(--text-lg);" x-text="new Date().toLocaleDateString('fr-FR')">-
+                </div>
+                <div class="label">Date du Rapport</div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div x-show="!loading && customers.length === 0" class="glass-card glass-card-lg"
+            style="text-align: center; padding: var(--spacing-2xl); color: var(--text-muted);">
+            <i class="bi bi-check-circle" style="font-size: 4rem; color: var(--color-success); opacity: 0.5;"></i>
+            <h5 style="margin-top: var(--spacing-md);">Aucun crédit en attente</h5>
+            <p>Tous les clients sont à jour dans leurs paiements!</p>
+        </div>
+
+        <!-- Loading State -->
+        <div x-show="loading" style="text-align: center; padding: var(--spacing-2xl);">
+            <div class="spinner"></div>
+        </div>
+
+        <!-- Customers List -->
+        <div x-show="!loading && customers.length > 0" style="display: none;">
+            <template x-for="customer in customers" :key="customer.name">
+                <div class="customer-card">
+                    <div class="customer-header">
+                        <div>
+                            <h3 style="margin: 0; font-size: var(--text-xl);" x-text="customer.name"></h3>
+                            <span class="badge-glow badge-warning" style="margin-top: var(--spacing-xs);"
+                                x-text="customer.sales_count + ' vente(s)'"></span>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: var(--text-sm); color: var(--text-secondary);">Total dû</div>
+                            <div style="font-size: var(--text-2xl); font-weight: 700; font-family: var(--font-display); color: var(--color-danger);"
+                                x-text="formatPrice(customer.total_owed)"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <template x-for="sale in customer.sales" :key="sale.id">
+                            <div class="sale-item">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; margin-bottom: var(--spacing-xs);"
+                                        x-text="'Vente #' + sale.id"></div>
+                                    <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-bottom: var(--spacing-xs);"
+                                        x-text="sale.sale_date"></div>
+                                    <div style="display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
+                                        <template x-for="item in sale.items" :key="item.product_name">
+                                            <span style="font-size: var(--text-xs); color: var(--text-muted);">
+                                                <span x-text="item.product_name"></span> ×<span
+                                                    x-text="item.quantity"></span>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: var(--spacing-md);">
+                                    <div style="font-size: var(--text-lg); font-weight: 700;"
+                                        x-text="formatPrice(sale.total_amount)"></div>
+                                    <button class="btn-gradient btn-success" style="padding: 0.5rem 1rem;"
+                                        @click="markAsPaid(sale.id)">
+                                        <i class="bi bi-check-lg"></i> Marquer Payé
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer
+        style="margin-top: var(--spacing-2xl); padding: var(--spacing-lg); text-align: center; border-top: 1px solid var(--glass-border);">
+        <small style="color: var(--text-secondary);">
+            Un produit <strong style="color: var(--color-primary);">HydaraSoft</strong> |
+            Développé par <strong>Ismail HAIDARA</strong> |
+            📞 <a href="tel:+22391550337">00223 91550337</a> |
+            📧 <a href="mailto:ihaidara852@gmail.com">ihaidara852@gmail.com</a>
+        </small>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/animations.js' %}"></script>
+    <script src="/static/js/offline-sales.js"></script>
+    <script src="/static/js/offline-data-loader.js"></script>
+
+    <script>
+        function creditLedgerApp() {
+            return {
+                loading: true,
+                customers: [],
+                summary: {
+                    total_customers: 0,
+                    total_outstanding: 0
+                },
+
+                async init() {
+                    await this.loadCreditData();
+                },
+
+                async loadCreditData() {
+                    this.loading = true;
+
+                    try {
+                        const response = await fetch('/api/credit/ledger/');
+                        const data = await response.json();
+
+                        this.customers = data.customers;
+                        this.summary = {
+                            total_customers: data.total_customers,
+                            total_outstanding: data.total_outstanding
+                        };
+
+                        this.$nextTick(() => {
+                            const valueElements = document.querySelectorAll('.metric-card .value');
+                            valueElements.forEach(el => {
+                                const text = el.textContent;
+                                if (!isNaN(parseInt(text))) {
+                                    window.pharmaAnimations.countUp(el, parseInt(text), 1000);
+                                }
+                            });
+                        });
+                    } catch (error) {
+                        console.error('Error loading credit data:', error);
+                        window.pharmaAnimations.showToast('Erreur lors du chargement des crédits', 'danger');
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                async markAsPaid(saleId) {
+                    const confirmed = await window.pharmaAnimations.confirmDialog(
+                        'Marquer cette vente crédit comme payée?',
+                        'Confirmation de Paiement'
+                    );
+
+                    if (!confirmed) return;
+
+                    window.pharmaAnimations.LoadingSpinner.show();
+
+                    try {
+                        const response = await fetch(`/api/credit/${saleId}/mark-paid/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': this.getCookie('csrftoken')
+                            }
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            window.pharmaAnimations.showToast(result.message, 'success');
+                            await this.loadCreditData();
+                        } else {
+                            window.pharmaAnimations.showToast('Erreur: ' + result.message, 'danger');
+                        }
+                    } catch (error) {
+                        window.pharmaAnimations.showToast('Erreur réseau', 'danger');
+                    } finally {
+                        window.pharmaAnimations.LoadingSpinner.hide();
+                    }
+                },
+
+                formatPrice(price) {
+                    return new Intl.NumberFormat('fr-FR', {
+                        style: 'currency',
+                        currency: 'XOF',
+                        minimumFractionDigits: 0
+                    }).format(price);
+                },
+
+                getCookie(name) {
+                    let cookieValue = null;
+                    if (document.cookie && document.cookie !== '') {
+                        const cookies = document.cookie.split(';');
+                        for (let i = 0; i < cookies.length; i++) {
+                            const cookie = cookies[i].trim();
+                            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                                break;
+                            }
+                        }
+                    }
+                    return cookieValue;
+                }
+            }
+        }
+    </script>
+
+    <!-- Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/js/service-worker.js');
+        }
+
+        if (navigator.onLine && window.offlineDataLoader) {
+            window.offlineDataLoader.loadAllData();
+        }
+    </script>
+</body>
+
+</html>

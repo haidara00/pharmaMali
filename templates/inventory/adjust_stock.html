@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajuster Stock - PharmaGestion</title>
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Custom Design System -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+    <div style="max-width: 700px; margin: 0 auto; padding: var(--spacing-lg);">
+        <!-- Header -->
+        <div
+            style="background: linear-gradient(135deg, var(--color-warning), var(--color-primary)); padding: var(--spacing-xl); border-radius: var(--radius-xl); margin-bottom: var(--spacing-xl); box-shadow: var(--shadow-xl);">
+            <h1
+                style="margin: 0; color: white; font-size: var(--text-3xl); display: flex; align-items: center; gap: var(--spacing-md);">
+                <i class="bi bi-sliders"></i>
+                Ajuster Stock
+            </h1>
+            <div style="margin-top: var(--spacing-md);">
+                <a href="/inventory/products/"
+                    style="color: white; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;">
+                    <i class="bi bi-arrow-left"></i> Retour aux Produits
+                </a>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="glass-card glass-card-lg">
+            <form method="post">
+                {% csrf_token %}
+
+                <div style="margin-bottom: var(--spacing-lg);">
+                    <h3 style="margin-bottom: var(--spacing-md);">{{ product.name }}</h3>
+                    <div
+                        style="display: flex; gap: var(--spacing-lg); padding: var(--spacing-md); background: var(--bg-secondary); border-radius: var(--radius-md);">
+                        <div>
+                            <div style="font-size: var(--text-sm); color: var(--text-secondary);">Stock Actuel</div>
+                            <div style="font-size: var(--text-2xl); font-weight: 700; color: var(--color-primary);">{{
+                                product.current_stock }}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: var(--text-sm); color: var(--text-secondary);">Stock Minimum</div>
+                            <div style="font-size: var(--text-xl); font-weight: 600;">{{ product.minimum_stock_level }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: var(--spacing-lg);">
+                    <label
+                        style="display: block; margin-bottom: var(--spacing-sm); color: var(--text-primary); font-weight: 500;">
+                        Type d'Ajustement <span style="color: var(--color-danger);">*</span>
+                    </label>
+                    {{ form.adjustment_type }}
+                </div>
+
+                <div style="margin-bottom: var(--spacing-lg);">
+                    <label
+                        style="display: block; margin-bottom: var(--spacing-sm); color: var(--text-primary); font-weight: 500;">
+                        Quantité <span style="color: var(--color-danger);">*</span>
+                    </label>
+                    {{ form.quantity }}
+                </div>
+
+                <div style="margin-bottom: var(--spacing-lg);">
+                    <label
+                        style="display: block; margin-bottom: var(--spacing-sm); color: var(--text-primary); font-weight: 500;">
+                        Raison
+                    </label>
+                    {{ form.reason }}
+                </div>
+
+                <div
+                    style="display: flex; gap: var(--spacing-md); justify-content: flex-end; margin-top: var(--spacing-2xl);">
+                    <a href="/inventory/products/" class="btn-gradient btn-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn-gradient btn-warning">
+                        <i class="bi bi-check-circle"></i> Ajuster le Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer
+        style="margin-top: var(--spacing-2xl); padding: var(--spacing-lg); text-align: center; border-top: 1px solid var(--glass-border);">
+        <small style="color: var(--text-secondary);">
+            Un produit <strong style="color: var(--color-primary);">HydaraSoft</strong> |
+            Développé par <strong>Ismail HAIDARA</strong>
+        </small>
+    </footer>
+
+    <script src="{% static 'js/animations.js' %}"></script>
+</body>
+
+</html>
